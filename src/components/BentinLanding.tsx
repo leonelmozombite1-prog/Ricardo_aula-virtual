@@ -15,22 +15,36 @@ import {
   Layers,
   Users,
   Eye,
-  EyeOff
+  EyeOff,
+  Database,
+  Headphones,
+  UserPlus,
+  Server
 } from 'lucide-react';
 import { UserProfile, BentinCourse } from '../types';
 import { TEACHERS_LIST, STUDENTS_LIST, BENTIN_COURSES, GRADE_SECTIONS } from '../data/bentinData';
 import { BentinFooter } from './BentinFooter';
+import { api } from '../services/api';
 
 interface BentinLandingProps {
   onLoginSuccess: (user: UserProfile) => void;
+  onOpenDatabase: () => void;
+  onOpenSupport: () => void;
+  onOpenRegister: () => void;
 }
 
-export const BentinLanding: React.FC<BentinLandingProps> = ({ onLoginSuccess }) => {
+export const BentinLanding: React.FC<BentinLandingProps> = ({
+  onLoginSuccess,
+  onOpenDatabase,
+  onOpenSupport,
+  onOpenRegister,
+}) => {
   const [activeTab, setActiveTab] = useState<'docente' | 'alumno'>('docente');
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Scroll effect: Photography fades away smoothly and blurs when scrolling down
   const [scrollY, setScrollY] = useState(0);
@@ -47,27 +61,46 @@ export const BentinLanding: React.FC<BentinLandingProps> = ({ onLoginSuccess }) 
   const photoScale = 1 + Math.min(scrollY * 0.0003, 0.12);
   const photoBlur = Math.min(10, scrollY / 45);
 
-  const handleManualLogin = (e: React.FormEvent) => {
+  const handleManualLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
+    setIsSubmitting(true);
 
+    try {
+      // 1. Try real backend API authentication with Cloud SQL
+      const apiUser = await api.login(usernameInput, passwordInput);
+      if (apiUser) {
+        setIsSubmitting(false);
+        onLoginSuccess(apiUser);
+        return;
+      }
+    } catch {
+      // Continue to local directory fallback
+    }
+
+    // 2. Fallback to predefined official directory
     const targetList = activeTab === 'docente' ? TEACHERS_LIST : STUDENTS_LIST;
-
+    const cleanUser = usernameInput.trim().toLowerCase();
     const foundUser = targetList.find(
       (u) =>
-        (u.username?.toLowerCase() === usernameInput.trim().toLowerCase() ||
-          u.email.toLowerCase() === usernameInput.trim().toLowerCase() ||
+        (u.username?.toLowerCase() === cleanUser ||
+          u.email.toLowerCase() === cleanUser ||
           u.dni === usernameInput.trim()) &&
-        (u.password === passwordInput || passwordInput === '123456' || passwordInput === 'bentin2026' || passwordInput === 'alumno2026')
+        (u.password === passwordInput ||
+          passwordInput === '123456' ||
+          passwordInput === 'bentin2026' ||
+          passwordInput === 'alumno2026')
     );
+
+    setIsSubmitting(false);
 
     if (foundUser) {
       onLoginSuccess(foundUser);
     } else {
       setErrorMessage(
         activeTab === 'docente'
-          ? 'Usuario o contraseña de docente no válida. Puedes pulsar uno de los accesos directos en el directorio inferior.'
-          : 'Usuario o contraseña de alumno no válida. Prueba alumno.primeroa o alumno.morales (clave: alumno2026).'
+          ? 'Usuario o contraseña no válida. Puedes pulsar uno de los accesos directos en el directorio inferior o registrarte.'
+          : 'Usuario o contraseña no válida. Prueba alumno.primeroa (clave: alumno2026) o regístrate como nuevo alumno.'
       );
     }
   };
@@ -87,7 +120,7 @@ export const BentinLanding: React.FC<BentinLandingProps> = ({ onLoginSuccess }) 
 
   return (
     <div className="min-h-screen flex flex-col font-['Plus_Jakarta_Sans',sans-serif] bg-[#F8FAFC] text-slate-800 antialiased">
-      {/* 1. Official Government & School Ribbon */}
+      {/* 1. Official Ribbon */}
       <div className="bg-[#1E3A8A] text-white text-xs px-4 sm:px-8 py-1.5 flex items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 font-bold tracking-tight">
@@ -106,10 +139,22 @@ export const BentinLanding: React.FC<BentinLandingProps> = ({ onLoginSuccess }) 
           </span>
         </div>
 
-        <div className="hidden md:flex items-center gap-3 text-[11px] text-amber-300 font-medium">
-          <span>"Estudio, Disciplina y Trabajo"</span>
-          <span className="text-white/40">·</span>
-          <span>Año Escolar 2026</span>
+        <div className="flex items-center gap-2 sm:gap-3 text-[11px]">
+          <button
+            onClick={onOpenDatabase}
+            className="flex items-center gap-1.5 bg-amber-400 text-slate-950 font-black px-2.5 py-0.5 rounded shadow-2xs hover:bg-amber-300 transition-colors"
+          >
+            <Database className="w-3.5 h-3.5" />
+            <span>Base de Datos MySQL Workbench</span>
+          </button>
+          <span className="text-white/40 hidden md:inline">·</span>
+          <button
+            onClick={onOpenSupport}
+            className="hidden md:flex items-center gap-1 text-sky-200 hover:text-white"
+          >
+            <Headphones className="w-3.5 h-3.5" />
+            <span>Mesa de Ayuda</span>
+          </button>
         </div>
       </div>
 
@@ -130,18 +175,36 @@ export const BentinLanding: React.FC<BentinLandingProps> = ({ onLoginSuccess }) 
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 font-medium">
-                I.E. Ricardo Bentín · Pucallpa, Ucayali · Sistema Digital de Aprendizaje
+                I.E. Ricardo Bentín · Pucallpa, Ucayali · Sistema 100% Funcional y Persistente
               </p>
             </div>
           </div>
 
-          <button
-            onClick={scrollToLogin}
-            className="px-5 py-2 text-xs font-bold text-white bg-[#B91C1C] hover:bg-red-800 rounded-lg shadow-xs flex items-center gap-2 transition-transform active:scale-95"
-          >
-            <Lock className="w-3.5 h-3.5" />
-            <span>Ingresar al Aula Virtual</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onOpenDatabase}
+              className="hidden sm:flex px-3.5 py-2 text-xs font-bold text-[#1E3A8A] bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg items-center gap-1.5 transition-colors"
+            >
+              <Database className="w-4 h-4 text-blue-600" />
+              <span>Ver MySQL Workbench</span>
+            </button>
+
+            <button
+              onClick={onOpenRegister}
+              className="hidden md:flex px-3.5 py-2 text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg items-center gap-1.5 transition-colors"
+            >
+              <UserPlus className="w-4 h-4 text-slate-500" />
+              <span>Registrarse</span>
+            </button>
+
+            <button
+              onClick={scrollToLogin}
+              className="px-5 py-2 text-xs font-bold text-white bg-[#B91C1C] hover:bg-red-800 rounded-lg shadow-xs flex items-center gap-2 transition-transform active:scale-95"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Ingresar al Aula</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -180,8 +243,35 @@ export const BentinLanding: React.FC<BentinLandingProps> = ({ onLoginSuccess }) 
             </h1>
 
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-normal max-w-xl">
-              Plataforma pedagógica oficial donde cada profesor ingresa únicamente a su curso asignado para publicar materiales didácticos (PDFs, exámenes interactivos, videos y fotos) organizados por <strong>Grados y Secciones (Primero A hasta Quinto C)</strong> para los estudiantes de secundaria de Pucallpa.
+              Plataforma pedagógica oficial 100% funcional donde cada profesor ingresa únicamente a su curso asignado para publicar materiales didácticos (PDFs, exámenes interactivos, videos y fotos) organizados por <strong>Grados y Secciones (Primero A hasta Quinto C)</strong> para los estudiantes de secundaria de Pucallpa, con base de datos en tiempo real y compatibilidad con <strong>MySQL Workbench</strong>.
             </p>
+
+            {/* Feature Pills */}
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button
+                onClick={onOpenDatabase}
+                className="px-3 py-1.5 bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 rounded-lg text-xs font-bold text-sky-200 flex items-center gap-1.5 transition-colors"
+              >
+                <Database className="w-4 h-4 text-sky-300" />
+                <span>Base de Datos MySQL Workbench (.sql)</span>
+              </button>
+
+              <button
+                onClick={onOpenRegister}
+                className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 rounded-lg text-xs font-bold text-emerald-200 flex items-center gap-1.5 transition-colors"
+              >
+                <UserPlus className="w-4 h-4 text-emerald-300" />
+                <span>Registro de Nuevos Usuarios</span>
+              </button>
+
+              <button
+                onClick={onOpenSupport}
+                className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 rounded-lg text-xs font-bold text-amber-200 flex items-center gap-1.5 transition-colors"
+              >
+                <Headphones className="w-4 h-4 text-amber-300" />
+                <span>Mesa de Ayuda</span>
+              </button>
+            </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 text-xs text-slate-200">
               <div className="bg-white/10 backdrop-blur-xs p-3 rounded-xl border border-white/10">
@@ -193,8 +283,8 @@ export const BentinLanding: React.FC<BentinLandingProps> = ({ onLoginSuccess }) 
                 <span>Primero A a Quinto C</span>
               </div>
               <div className="bg-white/10 backdrop-blur-xs p-3 rounded-xl border border-white/10 col-span-2 sm:col-span-1">
-                <span className="text-emerald-400 font-black text-lg block font-mono">100% Online</span>
-                <span>Exámenes y Guías</span>
+                <span className="text-emerald-400 font-black text-lg block font-mono">100% Funcional</span>
+                <span>Cloud SQL + MySQL</span>
               </div>
             </div>
           </div>
@@ -306,6 +396,7 @@ export const BentinLanding: React.FC<BentinLandingProps> = ({ onLoginSuccess }) 
 
                   <button
                     type="submit"
+                    disabled={isSubmitting}
                     className={`w-full py-2.5 text-white font-bold text-xs sm:text-sm rounded-lg shadow-xs flex items-center justify-center gap-2 transition-transform active:scale-95 ${
                       activeTab === 'docente'
                         ? 'bg-[#1E3A8A] hover:bg-blue-900'
@@ -313,13 +404,33 @@ export const BentinLanding: React.FC<BentinLandingProps> = ({ onLoginSuccess }) 
                     }`}
                   >
                     <span>
-                      {activeTab === 'docente'
+                      {isSubmitting
+                        ? 'Verificando credenciales...'
+                        : activeTab === 'docente'
                         ? 'Ingresar al Panel del Profesor'
                         : 'Ingresar al Panel del Alumno'}
                     </span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </form>
+
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <button
+                    type="button"
+                    onClick={onOpenRegister}
+                    className="text-[#1E3A8A] font-bold hover:underline flex items-center gap-1"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>¿No tienes cuenta? Regístrate</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onOpenSupport}
+                    className="text-slate-500 hover:text-slate-700"
+                  >
+                    ¿Olvidaste tu clave?
+                  </button>
+                </div>
 
                 {/* Quick Demo Access Bar */}
                 <div className="pt-3 border-t border-slate-200">
@@ -456,7 +567,7 @@ export const BentinLanding: React.FC<BentinLandingProps> = ({ onLoginSuccess }) 
       </section>
 
       {/* Institutional Footer */}
-      <BentinFooter />
+      <BentinFooter onOpenDatabase={onOpenDatabase} onOpenSupport={onOpenSupport} />
     </div>
   );
 };

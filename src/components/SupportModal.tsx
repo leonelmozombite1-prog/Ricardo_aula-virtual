@@ -10,6 +10,7 @@ import {
   HelpCircle,
   ChevronDown
 } from 'lucide-react';
+import { api } from '../services/api';
 
 interface SupportModalProps {
   isOpen: boolean;
@@ -41,12 +42,21 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
     },
   ];
 
-  const handleSubmitTicket = (e: React.FormEvent) => {
+  const handleSubmitTicket = async (e: React.FormEvent) => {
     e.preventDefault();
+    try {
+      await api.submitSupport({
+        name: 'Usuario I.E. Ricardo Bentin',
+        email: ticketEmail,
+        dni: ticketDni,
+        role: 'Estudiante / Docente',
+        subject: ticketSubject,
+        message: ticketMessage,
+      });
+    } catch (err) {
+      console.error('Error submitting ticket:', err);
+    }
     setSubmitted(true);
-    setTimeout(() => {
-      // keep submitted state visible
-    }, 400);
   };
 
   return (

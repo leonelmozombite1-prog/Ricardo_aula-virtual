@@ -53,19 +53,25 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
 
     setTimeout(() => {
       setLoading(false);
+      const isStudent = role === 'Estudiante';
       const newUser: UserProfile = {
         name: fullName,
         email,
         dni,
-        role,
-        region,
-        ugel,
-        institution: institution || 'I.E. Pública Nacional',
-        enrolledCourses: ['curso-ia-pedagogica'],
+        username: email.split('@')[0].toLowerCase(),
+        password: password || (isStudent ? 'alumno2026' : 'bentin2026'),
+        role: isStudent ? 'alumno' : 'docente',
+        grade: isStudent ? 'Primero de Secundaria' : undefined,
+        section: isStudent ? 'A' : undefined,
+        specialty: isStudent ? undefined : 'Docente de Secundaria',
+        assignedCourseId: isStudent ? undefined : 'curso-mat',
+        region: 'Ucayali',
+        ugel: 'UGEL Coronel Portillo',
+        institution: institution || 'I.E. Ricardo Bentín - Pucallpa',
       };
       onRegisterSuccess(newUser);
       onClose();
-    }, 700);
+    }, 500);
   };
 
   return (

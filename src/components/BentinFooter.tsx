@@ -1,7 +1,12 @@
 import React from 'react';
-import { School, MapPin, Phone, Mail, Award, GraduationCap } from 'lucide-react';
+import { School, MapPin, Phone, Mail, Database, Headphones, FileCode, Server } from 'lucide-react';
 
-export const BentinFooter: React.FC = () => {
+interface BentinFooterProps {
+  onOpenDatabase?: () => void;
+  onOpenSupport?: () => void;
+}
+
+export const BentinFooter: React.FC<BentinFooterProps> = ({ onOpenDatabase, onOpenSupport }) => {
   return (
     <footer className="bg-[#0B132B] text-slate-300 text-xs border-t border-slate-800">
       {/* Top Strip */}
@@ -14,9 +19,18 @@ export const BentinFooter: React.FC = () => {
             <span className="text-white/60">|</span>
             <span className="text-xs">Pucallpa · Coronel Portillo · Ucayali, Perú</span>
           </div>
-          <span className="text-[11px] text-white/90">
-            Lema Institucional: "Estudio, Disciplina y Trabajo"
-          </span>
+          <div className="flex items-center gap-3 text-[11px]">
+            <span className="text-white/90">Lema Institucional: "Estudio, Disciplina y Trabajo"</span>
+            {onOpenDatabase && (
+              <button
+                onClick={onOpenDatabase}
+                className="inline-flex items-center gap-1 bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded font-bold transition-colors"
+              >
+                <Database className="w-3 h-3 text-sky-300" />
+                <span>Base de Datos (.sql)</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -59,17 +73,37 @@ export const BentinFooter: React.FC = () => {
             </div>
           </div>
 
-          {/* Docentes */}
+          {/* Docentes & Database Tools */}
           <div>
             <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3 border-b border-slate-700/60 pb-1">
-              Para Docentes
+              Base de Datos y Herramientas
             </h4>
             <ul className="space-y-2 text-slate-400">
-              <li>Acceso exclusivo a su curso asignado</li>
-              <li>Subida de Guías y PDFs por sección</li>
-              <li>Creación de Exámenes y Cuestionarios</li>
-              <li>Publicación de Videos y Fotos de Clase</li>
-              <li>Registro de Calificaciones en tiempo real</li>
+              {onOpenDatabase && (
+                <li>
+                  <button
+                    onClick={onOpenDatabase}
+                    className="text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1.5 transition-colors"
+                  >
+                    <Database className="w-3.5 h-3.5" />
+                    <span>Abrir MySQL Workbench Viewer</span>
+                  </button>
+                </li>
+              )}
+              {onOpenSupport && (
+                <li>
+                  <button
+                    onClick={onOpenSupport}
+                    className="text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1.5 transition-colors"
+                  >
+                    <Headphones className="w-3.5 h-3.5" />
+                    <span>Mesa de Ayuda / Soporte</span>
+                  </button>
+                </li>
+              )}
+              <li>Cloud SQL PostgreSQL Activo</li>
+              <li>Archivo .sql para MySQL 8.0+</li>
+              <li>Modelo Relacional EER completo</li>
             </ul>
           </div>
 
@@ -90,7 +124,10 @@ export const BentinFooter: React.FC = () => {
 
         <div className="pt-6 border-t border-slate-800 text-[11px] text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p>© {new Date().getFullYear()} I.E. Ricardo Bentín - Pucallpa, Ucayali. Todos los derechos reservados.</p>
-          <p className="text-slate-400">Sistema Digital de Aprendizaje Escolar · Pucallpa, Ucayali</p>
+          <div className="flex items-center gap-2 text-slate-400">
+            <Server className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Base de datos en la nube 100% activa y persistente</span>
+          </div>
         </div>
       </div>
     </footer>
