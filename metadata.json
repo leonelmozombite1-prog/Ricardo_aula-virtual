@@ -1,0 +1,8 @@
+{
+  "name": "AULA VIRTUAL - (RICARDO BENTIN)",
+  "description": "Plataforma digital de aprendizaje de cursos virtuales, biblioteca de recursos, comunidades y campus digital.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
